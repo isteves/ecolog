@@ -1,0 +1,67 @@
+---
+title: "Categorizing posts"
+output: github_document
+---
+
+## Defining categories
+
+I reviewed the list of most-common words in the ecolog subject headers, and came up with a classification system for the different types of posts:
+
+- positions
+    - jobs
+    - internships
+    - volunteer
+    - reu
+    - msc
+    - phd
+    - postdoc
+    - faculty
+- events
+- grants/scholarships
+
+Below are some words that belong to each category, as well as synonyms.
+
+## Jobs
+job = hiring = employment
+
+temporary
+internship
+intern
+volunteer
+
+scientist
+ecologist
+researcher
+technician
+lead
+assistant
+fellow
+educator
+specialist
+manager
+biologist
+coordinator
+director
+
+## Studentships/academic appointments
+reu = undergrad
+msc = m.sc = master = graduate
+phd = ph.d = doctoral = graduate
+postdoc = postdoctoral
+professor = faculty = tenure
+lecturer = instructor
+
+## Events
+program
+project
+conference
+workshop
+training
+course
+webinar
+
+## Grants/scholarships
+grant
+scholarship
+proposal
+funding
