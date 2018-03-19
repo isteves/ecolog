@@ -45,10 +45,15 @@ director
 
 ## Studentships/academic appointments
 reu = undergrad
+
 msc = m.sc = master = graduate
+
 phd = ph.d = doctoral = graduate
+
 postdoc = postdoctoral
+
 professor = faculty = tenure
+
 lecturer = instructor
 
 ## Events
