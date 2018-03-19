@@ -51,6 +51,7 @@ ecolog_2018_count <- ecolog_2018_df %>%
     select(number, subject) %>% 
     unnest_tokens(word, subject) %>% 
     anti_join(stop_words) %>% 
+    mutate(word = str_replace(word, "s$", "")) %>% 
     count(word, sort = TRUE) %>% 
     arrange(desc(n))
 
