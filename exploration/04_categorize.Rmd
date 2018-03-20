@@ -19,13 +19,12 @@ I reviewed the list of most-common words in the ecolog subject headers, and came
 - events
 - grants/scholarships
 
-Below are some words that belong to each category, as well as synonyms.
+Below are some words that belong to each category, as well as synonyms. *Note:* I've included only the singular/root words for families of terms (e.g. intern = interns/internship).
 
-## Jobs
+#### Jobs
 job = hiring = employment
 
 temporary
-internship
 intern
 volunteer
 
@@ -43,7 +42,7 @@ biologist
 coordinator
 director
 
-## Studentships/academic appointments
+#### Academic positions
 reu = undergrad
 
 msc = m.sc = master = graduate
@@ -56,7 +55,7 @@ professor = faculty = tenure
 
 lecturer = instructor
 
-## Events
+#### Events
 program
 project
 conference
@@ -65,8 +64,58 @@ training
 course
 webinar
 
-## Grants/scholarships
+#### Funding
 grant
 scholarship
 proposal
 funding
+
+## Implementation
+
+Now let's define some variables and functions to help with the categorization process. We'll start with the two easier categories using a simple `str_detect`:
+
+```{r}
+is_event <- function(subject) {
+    stringr::str_detect(subject, "program|conference|workshop|training|course|webinar")
+}
+
+is_funding <- function(subject) {
+    stringr::str_detect(subject, "grant|scholarship|proposasl|funding")
+}
+```
+
+
+
+```{r}
+job_synonyms <- "job hiring employment"
+
+position_names <-  "scientist ecologist researcher technician lead assistant fellow educator specialist manager biologist coordinator director"
+
+aca_positions <- c("reu undergrad",
+                   "msc m.sc master graduate",
+                   "phd ph.d doctoral graduate",
+                   "postdoc postdoctoral",
+                   "professor faculty tenure",
+                   "lecturer instructor")
+
+misc_positions <- c("temporary", "intern", "volunteer")
+
+all_positions <- paste(job_synonyms, position_names, aca_positions, misc_positions)
+
+is_position <- function(subject){
+    str_detect(subject, 
+               all_positions %>% str_replace_all(" ", "|"))
+}
+```
+
+Now let's try it out on our data!
+
+```{r}
+ecolog_2018_df %>% 
+    mutate(funding = is_funding(subject),
+           event = is_event(subject),
+           position = is_position(subject)) %>% 
+    filter(funding == TRUE) %>% 
+    select(subject)
+```
+
