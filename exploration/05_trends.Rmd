@@ -1,0 +1,146 @@
+---
+title: "Ecology job cycles"
+author: "Irene Steves"
+date: "March 22, 2018"
+output: html_document
+---
+
+Straight out of undergrad, I was ready for some awesome outdoor science and on the look-out for a field job. I started off with a short semi-volunteer position for a month and a half around September, and then headed home to the parents to apply for more.
+
+I applied and applied.  Nothing.  Not. A. Peep!
+
+Once January rolled around, job offers finally started rolling in! Turned out, I was applying in the wrong season. Had I done some data-sleuthing, I would have figured this out far sooner. So, now that I'm armed with those very skills, I am curious to explore when different types of ecology positions are posted on ecolog.
+
+## Data
+Let's start by getting some data...
+
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+
+data <- read.csv("~/R/ecolog/data/ecolog_all.csv",
+                 stringsAsFactors = FALSE)
+```
+
+## General trends
+I imagine there won't be any general signal, since position types are so varied. 
+
+```{r}
+is_position <- function(subject){
+    subject %>% 
+        str_to_lower() %>% 
+        str_detect("job|hiring|employment|position|research associate|position|scientist|ecologist|researcher|technician|lead|assistant|fellow|educator|specialist|manager|biologist|coordinator|director|reu|undergrad| ms |msc|m.sc|master|graduate|ms|phd|ph.d|doctoral|graduate|post doc|postdoc|postdoctoral|professor|faculty|tenure|lecturer|instructor|temporary|intern|volunteer")
+}
+
+data %>% 
+    as_tibble() %>% 
+    filter(is_position(subject),
+           year(date) != 2018) %>%  
+    #filter out 2018 because we only have partial data
+    mutate(month = as.factor(month(date))) %>% 
+    group_by(month) %>% 
+    summarize(count = n()) %>% 
+    ggplot() +
+    geom_col(aes(x = month, y = count))
+```
+Turns out, there's a dip in the summer! Let's take a look at how that breaks down.
+
+## Fieldwork
+Based on my experience, the number of field job postings seems to really ramp up starting in January, probably peak right before summer, and then probably start dipping  again by August.  Let's see if I'm right:
+
+```{r warning = FALSE}
+data %>% 
+    as_tibble() %>% 
+    filter(is_position(subject),
+           str_detect(subject, "field|seasonal"),
+           year(date) != 2018) %>%  
+    mutate(month = as.factor(month(date))) %>% 
+    group_by(month) %>% 
+    summarize(count = n()) %>% 
+    ggplot() +
+    geom_col(aes(x = month, y = count))
+```
+
+Based on the plot, it looks like January to March are peak hiring months on eco-log! My intuition was not exactly on the ball, but close.
+
+## MS/PhD positions
+I suspect I'll see a peak in fall, when many prospective students are applying to American graduate programs, which typically have deadlines in Nov-January.
+
+```{r}
+data %>% 
+    as_tibble() %>% 
+    filter(is_position(subject),
+           str_detect(subject, " ms |msc|master|phd|ph.d|doctoral|graduate"),
+           year(date) != 2018) %>% 
+    mutate(month = as.factor(month(date))) %>% 
+    group_by(month) %>% 
+    summarize(count = n()) %>% 
+    ggplot() +
+    geom_col(aes(x = month, y = count))
+```
+
+Interestingly, I see two peaks--one around January, and another around October. Let's take a deeper look into this pattern and see if it repeats itself year after year.
+
+```{r}
+data %>% 
+    as_tibble() %>% 
+    filter(is_position(subject),
+           str_detect(subject, " ms |msc|master|phd|ph.d|doctoral|graduate"),
+           year(date) != 2018) %>% 
+    mutate(month = as.factor(month(date)),
+           year = as.factor(year(date))) %>% 
+    group_by(month, year) %>% 
+    summarize(count = n()) %>% 
+    ggplot(aes(x = month, y = count)) +
+    geom_boxplot()
+```
+
+The pattern is still vaguely suggestive, but not all that clear. If we look at the last five years, we see that posts about graduate programs in 2016 and 2017 peaked in November, which may explain my initial guess. 
+
+```{r}
+data %>% 
+    as_tibble() %>% 
+    filter(is_position(subject),
+           str_detect(subject, " ms |msc|master|phd|ph.d|doctoral|graduate"),
+           year(date) != 2018,
+           year(date) >= 2012) %>% 
+    mutate(month = month(date),
+           year = as.factor(year(date))) %>% 
+    group_by(month, year) %>% 
+    summarize(count = n()) %>% 
+    ggplot(aes(x = month, y = count, color = year)) +
+    geom_point() +
+    geom_line()
+```
+
+## Professorships
+I am totally not in tune with this one, but I'll just guess that March is high season since I recently heard about a tenure-track interview at UCSB. I imagine many schools would want to choose faculty members and get them settled in by August/September for the new school year.
+
+```{r}
+data %>% 
+    as_tibble() %>% 
+    filter(is_position(subject),
+           str_detect(subject, "faculty|tenure|professor"),
+           year(date) != 2018) %>% 
+    mutate(month = as.factor(month(date))) %>% 
+    group_by(month) %>% 
+    summarize(count = n()) %>% 
+    ggplot() +
+    geom_col(aes(x = month, y = count))
+```
+
+Surprisingly, September through November are peak months! Let's scroll through our data and make sure our filtering gets us reasonable results:
+
+```{r}
+data %>% 
+    as_tibble() %>% 
+    filter(is_position(subject),
+           str_detect(subject, "faculty|tenure|professor"),
+           year(date) != 2018) %>% 
+    select(date, subject) %>% 
+    head(10) %>% 
+    kable()
+```
+
+
