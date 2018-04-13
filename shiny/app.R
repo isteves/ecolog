@@ -1,19 +1,21 @@
 library(shiny)
 library(ggplot2)
 library(here)
+library(tidyverse)
+source(here("shiny", "categories.R"))
 
-data <- read.csv(here::here("data", "ecolog_shiny.csv"))[-1]
+data <- read.csv(here::here("data", "ecolog_all.csv"))[-1]
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-    titlePanel("Basic DataTable"),
+    titlePanel("ecolog listserv"),
     
     sidebarLayout(
         sidebarPanel(
             # conditionalPanel(
-            #     'input.position == "TRUE"',
+                # 'output.mytable4 == TRUE',
                 checkboxGroupInput("show_vars", "Columns to show:",
-                                   names(data)[1:5], selected = names(data)[2])),
+                                   names(data)[1:5], selected = names(data)[1:2])),
             # ),
             # conditionalPanel(
             #     'input.event == "TRUE"',
@@ -54,7 +56,8 @@ ui <- fluidPage(
             id = 'dataset',
             tabPanel("positions", DT::dataTableOutput("mytable1")),
             tabPanel("events", DT::dataTableOutput("mytable2")),
-            tabPanel("funding", DT::dataTableOutput("mytable3"))
+            tabPanel("funding", DT::dataTableOutput("mytable3")),
+            tabPanel("miscellaneous", DT::dataTableOutput("mytable4"))
         )
     )
 ))
@@ -63,19 +66,26 @@ ui <- fluidPage(
 server <- function(input, output) {
     
     # choose columns to display
-    positions <- data[data$position == TRUE, 1:5]
+    positions <- data %>% filter(is_position(subject))
     output$mytable1 <- DT::renderDataTable({
         DT::datatable(positions[, input$show_vars, drop = FALSE])
     })
     
-    events <- data[data$event == TRUE, 1:5]
+    events <- data %>% filter(is_event(subject))
     output$mytable2 <- DT::renderDataTable({
         DT::datatable(events[, input$show_vars, drop = FALSE])
     })
     
-    funding <- data[data$funding == TRUE, 1:5]
+    funding <- data %>% filter(is_funding(subject))
     output$mytable3 <- DT::renderDataTable({
         DT::datatable(funding[, input$show_vars, drop = FALSE], 
+                      options = list(pageLength = 10))
+    })
+    
+    misc <- data %>% 
+        filter(!is_funding(subject), !is_event(subject), !is_position(subject))
+    output$mytable4 <- DT::renderDataTable({
+        DT::datatable(misc[, input$show_vars, drop = FALSE], 
                       options = list(pageLength = 10))
     })
     

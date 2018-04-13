@@ -74,9 +74,12 @@ funding
 
 Now let's define some variables and functions to help with the categorization process. We'll start with the two easier categories using a simple `str_detect`:
 
-```{r}
+```{r warning = FALSE, message = FALSE}
+library(tidyverse)
+library(here)
+
 is_event <- function(subject) {
-    stringr::str_detect(subject, "program|conference|workshop|training|course|webinar")
+    stringr::str_detect(subject, "conference|workshop|training|course|webinar")
 }
 
 is_funding <- function(subject) {
@@ -91,16 +94,17 @@ job_synonyms <- "job hiring employment"
 
 position_names <-  "scientist ecologist researcher technician lead assistant fellow educator specialist manager biologist coordinator director"
 
-aca_positions <- c("reu undergrad",
-                   "msc m.sc master graduate",
-                   "phd ph.d doctoral graduate",
-                   "postdoc postdoctoral",
-                   "professor faculty tenure",
-                   "lecturer instructor")
+aca_positions <- c(undergrad = "reu undergrad",
+                   masters = "msc m.sc master graduate",
+                   phd = "phd ph.d doctoral graduate",
+                   postdoc = "postdoc postdoctoral",
+                   faculty = "professor faculty tenure lecturer instructor")
 
 misc_positions <- c("temporary", "intern", "volunteer")
 
-all_positions <- paste(job_synonyms, position_names, aca_positions, misc_positions)
+all_positions <- paste(job_synonyms, position_names, 
+                       paste(aca_positions, collapse = " "), 
+                       paste(misc_positions, collapse = " "))
 
 is_position <- function(subject){
     str_detect(subject, 
@@ -111,11 +115,12 @@ is_position <- function(subject){
 Now let's try it out on our data!
 
 ```{r}
+ecolog_2018_df <- read.csv(here("data", "ecolog_2018.csv")) #do this outside of rmd
+
 ecolog_2018_df %>% 
     mutate(funding = is_funding(subject),
            event = is_event(subject),
            position = is_position(subject)) %>% 
-    filter(funding == TRUE) %>% 
-    select(subject)
+    head()
 ```
 
