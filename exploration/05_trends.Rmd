@@ -5,11 +5,11 @@ date: "March 22, 2018"
 output: html_document
 ---
 
-Straight out of undergrad, I was ready for some awesome outdoor science and on the look-out for a field job. I started off with a short semi-volunteer position for a month and a half around September, and then headed home to the parents to apply for more.
+Straight out of undergrad, I was ready for some outdoor science. I started off with a short semi-volunteer field position in the early fall, and then headed home to the parents to apply for more.
 
-I applied and applied.  Nothing.  Not. A. Peep!
+I applied and applied... Not. A. Peep!
 
-Once January rolled around, job offers finally started rolling in! Turned out, I was applying in the wrong season. Had I done some data-sleuthing, I would have figured this out far sooner. So, now that I'm armed with those very skills, I am curious to explore when different types of ecology positions are posted on ecolog.
+Once January rolled around, job offers finally started rolling in. Turned out, I had been applying in the wrong season. Had I done some data-sleuthing, I would have realized that winter is slow season for field jobs. So, now that I'm armed with those very skills, I am curious to explore when different types of ecology positions are posted on ecolog.
 
 ## Data
 Let's start by getting some data...
@@ -19,7 +19,7 @@ library(tidyverse)
 library(lubridate)
 library(knitr)
 
-data <- read.csv("~/R/ecolog/data/ecolog_all.csv",
+data <- read.csv("../data/ecolog_all.csv",
                  stringsAsFactors = FALSE)
 ```
 
@@ -34,32 +34,49 @@ is_position <- function(subject){
 }
 
 data %>% 
-    as_tibble() %>% 
-    filter(is_position(subject),
-           year(date) != 2018) %>%  
-    #filter out 2018 because we only have partial data
-    mutate(month = as.factor(month(date))) %>% 
-    group_by(month) %>% 
-    summarize(count = n()) %>% 
-    ggplot() +
-    geom_col(aes(x = month, y = count))
+  as_tibble() %>% 
+  filter(is_position(subject),
+         year(date) != 2018) %>%  
+  #filter out 2018 because we only have partial data
+  mutate(month = as.factor(month(date))) %>% 
+  group_by(month) %>% 
+  summarize(count = n()) %>% 
+  ggplot() +
+  geom_col(aes(x = month, y = count)) +
+  xlab("Month") + ylab("Number of posts")
 ```
-Turns out, there's a dip in the summer! Let's take a look at how that breaks down.
+
+Turns out, I'm wrong and there's a dip in the summer! Let's take a look at how that breaks down.
+
+## Categorize
+
+Let's starting by subsetting out the posts that are likely to be positions and then categorize them based on the appearance of different words in their subject.
+
+```{r}
+data %>% 
+  as_tibble() %>% 
+  filter(is_position(subject), year(date) != 2018)
+
+```
+
+
+
 
 ## Fieldwork
 Based on my experience, the number of field job postings seems to really ramp up starting in January, probably peak right before summer, and then probably start dipping  again by August.  Let's see if I'm right:
 
 ```{r warning = FALSE}
 data %>% 
-    as_tibble() %>% 
-    filter(is_position(subject),
-           str_detect(subject, "field|seasonal"),
-           year(date) != 2018) %>%  
-    mutate(month = as.factor(month(date))) %>% 
-    group_by(month) %>% 
-    summarize(count = n()) %>% 
-    ggplot() +
-    geom_col(aes(x = month, y = count))
+  as_tibble() %>% 
+  filter(is_position(subject),
+         str_detect(subject, "field|seasonal"),
+         year(date) != 2018) %>%  
+  mutate(month = as.factor(month(date))) %>% 
+  group_by(month) %>% 
+  summarize(count = n()) %>% 
+  ggplot() +
+  geom_col(aes(x = month, y = count)) +
+  xlab("Month") + ylab("Number of posts")
 ```
 
 Based on the plot, it looks like January to March are peak hiring months on eco-log! My intuition was not exactly on the ball, but close.
@@ -77,7 +94,8 @@ data %>%
     group_by(month) %>% 
     summarize(count = n()) %>% 
     ggplot() +
-    geom_col(aes(x = month, y = count))
+    geom_col(aes(x = month, y = count)) +
+  xlab("Month") + ylab("Number of posts")
 ```
 
 Interestingly, I see two peaks--one around January, and another around October. Let's take a deeper look into this pattern and see if it repeats itself year after year.
