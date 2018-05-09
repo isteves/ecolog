@@ -3,6 +3,7 @@ output:
     html_document:
         toc: true
         toc_float: true
+        toc_depth: 2
 ---
 # Ecology job cycles
 ### _By Irene Steves_
