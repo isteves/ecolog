@@ -1,17 +1,25 @@
 ---
-title: "Ecology job cycles"
-author: "Irene Steves"
-date: "March 22, 2018"
-output: html_document
+output: 
+    html_document:
+        toc: true
+        toc_float: true
 ---
+# Ecology job cycles
+### _By Irene Steves_
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(warning = FALSE)
+```
 
 Straight out of undergrad, I was ready for some outdoor science. I started off with a short semi-volunteer field position in the early fall, and then headed home to the parents to apply for more.
 
 I applied and applied... Not. A. Peep!
 
+![](https://media.giphy.com/media/11R5KYi6ZdP8Z2/giphy.gif)
+
 Once January rolled around, job offers finally started rolling in. Turned out, I had been applying in the wrong season. Had I done some data-sleuthing, I would have realized that winter is slow season for field jobs. So, now that I'm armed with those very skills, I am curious to explore when different types of ecology positions are posted on ecolog.
 
-## Data
+## Data prep
 Let's start by getting some data...
 
 ```{r message = FALSE, warning = FALSE}
@@ -23,8 +31,7 @@ data <- read.csv("../data/ecolog_all.csv",
                  stringsAsFactors = FALSE)
 ```
 
-## General trends
-I imagine there won't be any general signal, since position types are so varied. 
+Rather than doing something fancy to sort these posts, I used `str_detect` to check if the collection of terms that I associate with faculty/graduate positions or jobs appear in the subject. Here, I've written this into a function:
 
 ```{r}
 is_position <- function(subject){
@@ -32,52 +39,58 @@ is_position <- function(subject){
         str_to_lower() %>% 
         str_detect("job|hiring|employment|position|research associate|position|scientist|ecologist|researcher|technician|lead|assistant|fellow|educator|specialist|manager|biologist|coordinator|director|reu|undergrad| ms |msc|m.sc|master|graduate|ms|phd|ph.d|doctoral|graduate|post doc|postdoc|postdoctoral|professor|faculty|tenure|lecturer|instructor|temporary|intern|volunteer")
 }
-
-data %>% 
-  as_tibble() %>% 
-  filter(is_position(subject),
-         year(date) != 2018) %>%  
-  #filter out 2018 because we only have partial data
-  mutate(month = as.factor(month(date))) %>% 
-  group_by(month) %>% 
-  summarize(count = n()) %>% 
-  ggplot() +
-  geom_col(aes(x = month, y = count)) +
-  xlab("Month") + ylab("Number of posts")
 ```
 
-Turns out, I'm wrong and there's a dip in the summer! Let's take a look at how that breaks down.
-
-## Categorize :smiley_cat:
-
-Let's starting by subsetting out the posts that are likely to be positions and then categorize them based on the appearance of different words in their subject.
+Now let's apply it to the data and also categorize the posts into more specific groups, as well: 
 
 ```{r}
 data_cat <- data %>% 
     as_tibble() %>% 
-    filter(is_position(subject), year(date) != 2018) %>% 
-    mutate(subject_low = str_to_lower(subject),
+    filter(is_position(subject), 
+           year(date) != 2018) %>% 
+    #filter out 2018 because we only have partial data
+    
+    mutate(month = month(date), #for counting purposes later
+           subject_low = str_to_lower(subject), #for str_detect case sensitivity
            is_fieldwork = str_detect(subject_low, "field|seasonal"),
            is_gradschool = str_detect(subject_low, " ms |msc|master|phd|ph.d|doctoral|graduate"),
            is_faculty = str_detect(subject_low, "faculty|tenure|professor")) %>% 
+    
     rowwise() %>% 
     mutate(is_other = ifelse(sum(is_fieldwork, is_gradschool, is_faculty) == 0,
-                             TRUE,
-                             FALSE))
+                             TRUE, FALSE))
 ```
+
+
+## General trends
+I imagine there won't be any general signal, since position types are so varied. 
+
+```{r warning = FALSE, message = FALSE}
+data_cat %>% 
+  group_by(month) %>% 
+  summarize(count = n()) %>% 
+  ggplot() +
+  geom_col(aes(x = as.factor(month), y = count)) +
+  xlab("Month") + ylab("Number of posts") +
+  theme_bw()
+```
+
+Turns out, I'm wrong and there's a dip in the summer! Let's take a look at how that breaks down to investigate this some more.
+
+![](https://media.giphy.com/media/Gpf8A8aX2uWAg/giphy.gif)
 
 ## Fieldwork
 Based on my experience, the number of field job postings seems to really ramp up starting in January, probably peak right before summer, and then probably start dipping  again by August.  Let's see if I'm right:
 
-```{r warning = FALSE}
+```{r warning = FALSE, message = FALSE}
 data_cat %>% 
   filter(is_fieldwork == TRUE) %>%  
-  mutate(month = as.factor(month(date))) %>% 
   group_by(month) %>% 
   summarize(count = n()) %>% 
   ggplot() +
-  geom_col(aes(x = month, y = count)) +
-  xlab("Month") + ylab("Number of posts")
+  geom_col(aes(x = as.factor(month), y = count)) +
+  xlab("Month") + ylab("Number of posts") +
+  theme_bw()
 ```
 
 Based on the plot, it looks like January to March are peak hiring months on eco-log! My intuition was not exactly on the ball, but close.
@@ -85,15 +98,15 @@ Based on the plot, it looks like January to March are peak hiring months on eco-
 ## MS/PhD positions
 I suspect I'll see a peak in fall, when many prospective students are applying to American graduate programs, which typically have deadlines in Nov-January.
 
-```{r}
+```{r warning = FALSE}
 data_cat %>% 
     filter(is_gradschool == TRUE) %>%  
-    mutate(month = as.factor(month(date))) %>% 
     group_by(month) %>% 
     summarize(count = n()) %>% 
     ggplot() +
-    geom_col(aes(x = month, y = count)) +
-  xlab("Month") + ylab("Number of posts")
+    geom_col(aes(x = as.factor(month), y = count)) +
+    xlab("Month") + ylab("Number of posts") +
+    theme_bw()
 ```
 
 Interestingly, I see two peaks--one around January, and another around October. Let's take a deeper look into this pattern and see if it repeats itself year after year.
@@ -101,40 +114,43 @@ Interestingly, I see two peaks--one around January, and another around October. 
 ```{r}
 data_cat %>% 
     filter(is_gradschool == TRUE) %>%  
-    mutate(month = as.factor(month(date)),
-           year = as.factor(year(date))) %>% 
+    mutate(year = year(date)) %>% 
     group_by(month, year) %>% 
     summarize(count = n()) %>% 
-    ggplot(aes(x = month, y = count)) +
-    geom_boxplot()
+    ggplot(aes(x = as.factor(month), y = count)) +
+    geom_boxplot() +
+    xlab("Month") + ylab("Number of postings") +
+    theme_bw()
 ```
 
 The pattern is still vaguely suggestive, but not all that clear. If we look at the last five years, we see that posts about graduate programs in 2016 and 2017 peaked in November, which may explain my initial guess. 
 
 ```{r}
 data_cat %>% 
-    filter(is_gradschool == TRUE,
-           year(date) >= 2012) %>% 
-    mutate(month = month(date),
-           year = as.factor(year(date))) %>% 
+    filter(is_gradschool == TRUE) %>% 
+    mutate(year = year(date)) %>% 
+    filter(year >= 2012) %>% 
     group_by(month, year) %>% 
     summarize(count = n()) %>% 
-    ggplot(aes(x = month, y = count, color = year)) +
+    ggplot(aes(x = month, y = count, color = as.factor(year))) +
     geom_point() +
-    geom_line()
+    geom_line() +
+    xlab("Month") + ylab("Number of postings") +
+    theme_bw()
 ```
 
 ## Professorships
-I am totally not in tune with this one, but I'll just guess that March is high season since I recently heard about a tenure-track interview at UCSB. I imagine many schools would want to choose faculty members and get them settled in by August/September for the new school year.
+I am totally not in tune with this one, but I'll just guess that March is high season since I recently hea(rd about a tenure-track interview at UCSB. I imagine many schools would want to choose faculty members and get them settled in by August/September for the new school year.
 
 ```{r}
 data_cat %>% 
-    filter(is_faculty == TRUE) %>%   
-    mutate(month = as.factor(month(date))) %>% 
+    filter(is_faculty == TRUE) %>% 
     group_by(month) %>% 
     summarize(count = n()) %>% 
-    ggplot() +
-    geom_col(aes(x = month, y = count))
+    ggplot(aes(x = as.factor(month), y = count)) +
+    geom_col() +
+    xlab("Month") + ylab("Number of postings") +
+    theme_bw()
 ```
 
 Surprisingly, September through November are peak months! Let's scroll through our data and make sure our filtering gets us reasonable results:
@@ -147,4 +163,23 @@ data_cat %>%
     kable()
 ```
 
+## Bringing it together
+
+```{r}
+data_cat %>% 
+    group_by(month, is_fieldwork, is_gradschool, is_faculty) %>% 
+    summarize(count = n()) %>% 
+    rowwise() %>% 
+    filter(sum(is_fieldwork, is_gradschool, is_faculty) == 1) %>% 
+    #filter out values that belong to multiple categories (for simplicity's sake)
+    gather(type, value, is_fieldwork:is_faculty) %>% 
+    filter(value == TRUE) %>% 
+    mutate(type = str_replace(type, "is_", "")) %>% 
+    
+    #now to plot...
+    ggplot(aes(x = as.factor(month), y = count, fill = type)) +
+    geom_col(position = "dodge") +
+    xlab("Month") + ylab("Number of postings") +
+    theme_bw()
+```
 
